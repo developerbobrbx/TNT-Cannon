@@ -50,17 +50,20 @@
 <div class="result" id="output"></div>
 
 <script>
+/* FIXED CANNON POSITION */
 const CANNON_X = -31.46;
 const CANNON_Z = 87.47;
 
+/* CANNON SETTINGS */
 const MAX_POWER = 6;
-const BLOCKS_PER_TNT = 25; // adjust if needed
+const BLOCKS_PER_TNT = 25;
 const GAP = 1;
 
 function simulate(xp, xd, zp, zd) {
-    let x = CANNON_X + (xp * BLOCKS_PER_TNT + GAP) * (xd === "+" ? 1 : -1);
-    let z = CANNON_Z + (zp * BLOCKS_PER_TNT + GAP) * (zd === "+" ? 1 : -1);
-    return { x, z };
+    return {
+        x: CANNON_X + (xp * BLOCKS_PER_TNT + GAP) * (xd === "+" ? 1 : -1),
+        z: CANNON_Z + (zp * BLOCKS_PER_TNT + GAP) * (zd === "+" ? 1 : -1)
+    };
 }
 
 function calculate() {
@@ -95,12 +98,12 @@ function calculate() {
     }
 
     document.getElementById("output").textContent =
-        `BEST MATCH\n` +
-        `${best.xp} TNT on X${best.xd}\n` +
-        `${best.zp} TNT on Z${best.zd}\n\n` +
+        `BEST MATCH\n\n` +
+        `Z${best.zd} : ${best.zp} power\n` +
+        `X${best.xd} : ${best.xp} power\n\n` +
         `Landing position:\n` +
-        `X: ${best.hit.x.toFixed(2)}\n` +
-        `Z: ${best.hit.z.toFixed(2)}\n\n` +
+        `X = ${best.hit.x.toFixed(2)}\n` +
+        `Z = ${best.hit.z.toFixed(2)}\n\n` +
         `Miss distance: ${bestError.toFixed(2)} blocks`;
 }
 </script>
