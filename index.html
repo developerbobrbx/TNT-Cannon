@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>TNT Cannon Calculator</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #0f172a;
+        color: #e5e7eb;
+        padding: 20px;
+    }
+    h1 {
+        font-size: 22px;
+    }
+    input {
+        width: 100%;
+        padding: 8px;
+        margin: 6px 0;
+        font-size: 16px;
+    }
+    button {
+        width: 100%;
+        padding: 10px;
+        margin-top: 10px;
+        font-size: 16px;
+        background: #22c55e;
+        border: none;
+        cursor: pointer;
+    }
+    .result {
+        margin-top: 15px;
+        padding: 12px;
+        background: #020617;
+        border-radius: 6px;
+        white-space: pre-line;
+    }
+</style>
+</head>
+<body>
+
+<h1>TNT Cannon Power Calculator</h1>
+
+<p>Target coordinates:</p>
+<input id="tx" type="number" step="0.01" placeholder="Target X">
+<input id="tz" type="number" step="0.01" placeholder="Target Z">
+
+<button onclick="calculate()">Calculate</button>
+
+<div class="result" id="output"></div>
+
+<script>
+const CANNON_X = -31.46;
+const CANNON_Z = 87.47;
+
+const MAX_POWER = 6;
+const BLOCKS_PER_TNT = 25; // adjust if needed
+const GAP = 1;
+
+function simulate(xp, xd, zp, zd) {
+    let x = CANNON_X + (xp * BLOCKS_PER_TNT + GAP) * (xd === "+" ? 1 : -1);
+    let z = CANNON_Z + (zp * BLOCKS_PER_TNT + GAP) * (zd === "+" ? 1 : -1);
+    return { x, z };
+}
+
+function calculate() {
+    const tx = parseFloat(document.getElementById("tx").value);
+    const tz = parseFloat(document.getElementById("tz").value);
+
+    if (isNaN(tx) || isNaN(tz)) {
+        document.getElementById("output").textContent = "Enter valid target coordinates.";
+        return;
+    }
+
+    let best = null;
+    let bestError = Infinity;
+
+    for (let xp = 0; xp <= MAX_POWER; xp++) {
+        for (let zp = 0; zp <= MAX_POWER; zp++) {
+            for (let xd of ["+", "-"]) {
+                for (let zd of ["+", "-"]) {
+
+                    if (xp === 0 && zp === 0) continue;
+
+                    const hit = simulate(xp, xd, zp, zd);
+                    const error = Math.hypot(hit.x - tx, hit.z - tz);
+
+                    if (error < bestError) {
+                        bestError = error;
+                        best = { xp, xd, zp, zd, hit };
+                    }
+                }
+            }
+        }
+    }
+
+    document.getElementById("output").textContent =
+        `BEST MATCH\n` +
+        `${best.xp} TNT on X${best.xd}\n` +
+        `${best.zp} TNT on Z${best.zd}\n\n` +
+        `Landing position:\n` +
+        `X: ${best.hit.x.toFixed(2)}\n` +
+        `Z: ${best.hit.z.toFixed(2)}\n\n` +
+        `Miss distance: ${bestError.toFixed(2)} blocks`;
+}
+</script>
+
+</body>
+</html>
