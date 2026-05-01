@@ -2,111 +2,632 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>TNT Cannon Calculator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cannon Fire Control</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Share+Tech+Mono&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-    body {
-        font-family: Arial, sans-serif;
-        background: #0f172a;
-        color: #e5e7eb;
-        padding: 20px;
-    }
-    h1 {
-        font-size: 22px;
-    }
-    input {
-        width: 100%;
-        padding: 8px;
-        margin: 6px 0;
-        font-size: 16px;
-    }
-    button {
-        width: 100%;
-        padding: 10px;
-        margin-top: 10px;
-        font-size: 16px;
-        background: #22c55e;
-        border: none;
-        cursor: pointer;
-    }
-    .result {
-        margin-top: 15px;
-        padding: 12px;
-        background: #020617;
-        border-radius: 6px;
-        white-space: pre-line;
-    }
+  :root {
+    --red: #c0392b;
+    --red-bright: #e74c3c;
+    --red-dark: #7b1a10;
+    --red-deep: #3d0d08;
+    --red-glow: rgba(192, 57, 43, 0.25);
+    --bg: #0a0706;
+    --bg2: #110e0d;
+    --bg3: #1a1412;
+    --panel: #140f0e;
+    --border: rgba(192, 57, 43, 0.3);
+    --border-bright: rgba(231, 76, 60, 0.6);
+    --text: #f0e8e6;
+    --text-muted: #8a6e6a;
+    --text-dim: #4a3330;
+    --mono: 'Share Tech Mono', monospace;
+    --display: 'Bebas Neue', sans-serif;
+    --body: 'Barlow', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(192,57,43,0.04) 39px, rgba(192,57,43,0.04) 40px),
+      repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(192,57,43,0.04) 39px, rgba(192,57,43,0.04) 40px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--red), var(--red-bright), var(--red), transparent);
+    z-index: 100;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    padding-top: 1rem;
+    position: relative;
+  }
+
+  .header-eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--red);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    opacity: 0;
+    animation: fadeUp 0.5s ease 0.1s forwards;
+  }
+
+  .header h1 {
+    font-family: var(--display);
+    font-size: clamp(48px, 10vw, 80px);
+    letter-spacing: 4px;
+    color: var(--text);
+    line-height: 1;
+    margin-bottom: 4px;
+    opacity: 0;
+    animation: fadeUp 0.6s ease 0.2s forwards;
+  }
+
+  .header h1 span {
+    color: var(--red-bright);
+    text-shadow: 0 0 40px rgba(231,76,60,0.5);
+  }
+
+  .header-sub {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+    opacity: 0;
+    animation: fadeUp 0.6s ease 0.35s forwards;
+  }
+
+  .header-line {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--red), transparent);
+    margin: 1.5rem 0;
+    opacity: 0;
+    animation: fadeIn 0.8s ease 0.5s forwards;
+  }
+
+  /* ── PANELS ── */
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    margin-bottom: 1rem;
+    position: relative;
+    overflow: hidden;
+    opacity: 0;
+    animation: fadeUp 0.5s ease var(--delay, 0.4s) forwards;
+  }
+
+  .panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px; height: 100%;
+    background: linear-gradient(to bottom, var(--red-bright), transparent);
+  }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px 10px 20px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(192,57,43,0.06);
+  }
+
+  .panel-icon {
+    width: 6px; height: 6px;
+    background: var(--red-bright);
+    border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 0 8px var(--red-bright);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  .panel-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--red);
+    text-transform: uppercase;
+    flex: 1;
+  }
+
+  .panel-id {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  .panel-body {
+    padding: 1.25rem 1.25rem 1.25rem 1.5rem;
+  }
+
+  /* ── GRID ── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+  @media (max-width: 520px) {
+    .grid-2 { grid-template-columns: 1fr; }
+    .grid-3 { grid-template-columns: 1fr 1fr; }
+  }
+
+  /* ── FIELDS ── */
+  .field { display: flex; flex-direction: column; gap: 5px; }
+
+  .field label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+
+  .field input {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 8px 12px;
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--text);
+    width: 100%;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .field input:focus {
+    outline: none;
+    border-color: var(--red);
+    box-shadow: 0 0 0 3px var(--red-glow);
+    background: var(--bg3);
+  }
+
+  .field input::placeholder {
+    color: var(--text-dim);
+  }
+
+  .field input::-webkit-inner-spin-button { opacity: 0.3; }
+
+  .calib-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+    padding-left: 2px;
+    border-left: 2px solid var(--red-dark);
+    padding-left: 8px;
+  }
+
+  .calib-row {
+    margin-bottom: 10px;
+  }
+
+  .calib-row-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--red-dark);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  /* ── DIVIDER ── */
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, var(--border), transparent);
+    margin: 1rem 0;
+  }
+
+  /* ── FIRE BUTTON ── */
+  .fire-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--red-dark);
+    border: 1px solid var(--red);
+    border-radius: 2px;
+    font-family: var(--display);
+    font-size: 22px;
+    letter-spacing: 6px;
+    color: var(--text);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s;
+    margin-top: 4px;
+  }
+
+  .fire-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(231,76,60,0.15) 50%, transparent 100%);
+    transform: translateX(-100%);
+    transition: transform 0.4s;
+  }
+
+  .fire-btn:hover {
+    background: var(--red);
+    border-color: var(--red-bright);
+    box-shadow: 0 0 30px var(--red-glow), inset 0 0 20px rgba(0,0,0,0.3);
+    letter-spacing: 8px;
+  }
+
+  .fire-btn:hover::before {
+    transform: translateX(100%);
+  }
+
+  .fire-btn:active {
+    transform: scale(0.99);
+    box-shadow: 0 0 50px var(--red-glow);
+  }
+
+  /* ── ERROR ── */
+  .error-msg {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: #ff6b6b;
+    background: rgba(255,107,107,0.08);
+    border: 1px solid rgba(255,107,107,0.3);
+    border-radius: 2px;
+    padding: 8px 12px;
+    margin-top: 8px;
+    display: none;
+  }
+
+  /* ── RESULTS ── */
+  #resultBox { display: none; }
+
+  .results-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 1rem;
+  }
+
+  @media (max-width: 480px) {
+    .results-grid { grid-template-columns: 1fr; }
+  }
+
+  .result-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 1rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s;
+  }
+
+  .result-card.primary {
+    border-color: var(--red);
+    background: rgba(192,57,43,0.08);
+  }
+
+  .result-card.primary::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--red-bright), transparent);
+  }
+
+  .result-card-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .result-card-value {
+    font-family: var(--display);
+    font-size: 40px;
+    letter-spacing: 2px;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  .result-card.primary .result-card-value {
+    color: var(--red-bright);
+    text-shadow: 0 0 30px rgba(231,76,60,0.4);
+  }
+
+  .result-card-unit {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 4px;
+    letter-spacing: 1px;
+  }
+
+  .result-card-dir {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--red);
+    margin-top: 2px;
+    letter-spacing: 1px;
+  }
+
+  .stats-row {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .stat-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+
+  .stat-value {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .stat-value span {
+    color: var(--text);
+  }
+
+  .side-note {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 1rem;
+    letter-spacing: 1px;
+    padding: 8px 12px;
+    border-left: 2px solid var(--red-dark);
+  }
+
+  /* ── WARN ── */
+  .warn-badge {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: #f39c12;
+    background: rgba(243,156,18,0.1);
+    border: 1px solid rgba(243,156,18,0.3);
+    border-radius: 2px;
+    padding: 2px 8px;
+    margin-top: 6px;
+  }
+
+  /* ── DECORATIVE ── */
+  .crosshair {
+    position: fixed;
+    right: 2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 60px;
+    height: 60px;
+    opacity: 0.06;
+    pointer-events: none;
+  }
+
+  .optional-tag {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    border: 1px solid var(--text-dim);
+    border-radius: 2px;
+    padding: 1px 6px;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--red-bright); }
+    50% { opacity: 0.5; box-shadow: 0 0 3px var(--red); }
+  }
+
+  @keyframes flashIn {
+    0% { opacity: 0; transform: scale(0.95); }
+    60% { opacity: 1; transform: scale(1.02); }
+    100% { transform: scale(1); }
+  }
+
+  .flash { animation: flashIn 0.4s ease forwards; }
 </style>
 </head>
 <body>
 
-<h1>TNT Cannon Power Calculator</h1>
+<svg class="crosshair" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="30" cy="30" r="28" stroke="#c0392b" stroke-width="1"/>
+  <circle cx="30" cy="30" r="14" stroke="#c0392b" stroke-width="1"/>
+  <circle cx="30" cy="30" r="2" fill="#c0392b"/>
+  <line x1="0" y1="30" x2="22" y2="30" stroke="#c0392b" stroke-width="1"/>
+  <line x1="38" y1="30" x2="60" y2="30" stroke="#c0392b" stroke-width="1"/>
+  <line x1="30" y1="0" x2="30" y2="22" stroke="#c0392b" stroke-width="1"/>
+  <line x1="30" y1="38" x2="30" y2="60" stroke="#c0392b" stroke-width="1"/>
+</svg>
 
-<p>Target coordinates:</p>
-<input id="tx" type="number" step="0.01" placeholder="Target X">
-<input id="tz" type="number" step="0.01" placeholder="Target Z">
+<div class="container">
 
-<button onclick="calculate()">Calculate</button>
+  <div class="header">
+    <div class="header-eyebrow">◆ OSC-TYPE ◆ FIRE CONTROL SYSTEM ◆</div>
+    <h1>CANNON <span>CALC</span></h1>
+    <div class="header-sub">PAYLOAD // FORWARD // SIDEWAYS</div>
+    <div class="header-line"></div>
+  </div>
 
-<div class="result" id="output"></div>
+  <!-- INPUT PANEL -->
+  <div class="panel" style="--delay:0.45s">
+    <div class="panel-header">
+      <div class="panel-icon"></div>
+      <div class="panel-title">Coordinates</div>
+      <div class="panel-id">INP-01</div>
+    </div>
+    <div class="panel-body">
+      <div class="grid-2">
+        <div class="field"><label>Cannon forward coord</label><input type="number" id="cannonF" placeholder="e.g. 63"></div>
+        <div class="field"><label>Cannon sideways coord</label><input type="number" id="cannonS" placeholder="e.g. -896"></div>
+      </div>
+      <div class="divider"></div>
+      <div class="grid-2">
+        <div class="field"><label>Target forward coord</label><input type="number" id="targetF" placeholder="e.g. 12"></div>
+        <div class="field"><label>Target sideways coord</label><input type="number" id="targetS" placeholder="e.g. -997"></div>
+      </div>
+      <div style="margin-top:14px;">
+        <button class="fire-btn" onclick="calculate()">FIRE</button>
+      </div>
+      <div class="error-msg" id="errMsg"></div>
+    </div>
+  </div>
+
+  <!-- RESULTS PANEL -->
+  <div id="resultBox" style="display:none;">
+    <div class="panel" style="opacity:1;">
+      <div class="panel-header">
+        <div class="panel-icon"></div>
+        <div class="panel-title">Fire Solution</div>
+        <div class="panel-id">RES-01</div>
+      </div>
+      <div class="panel-body">
+        <div class="results-grid">
+          <div class="result-card primary">
+            <div class="result-card-label">Payload</div>
+            <div class="result-card-value" id="rPayload">—</div>
+            <div class="result-card-unit" id="rPayloadUnit">STACKS</div>
+          </div>
+          <div class="result-card">
+            <div class="result-card-label">Forward</div>
+            <div class="result-card-value" id="rForward">—</div>
+            <div class="result-card-unit" id="rForwardUnit">STACKS</div>
+          </div>
+          <div class="result-card">
+            <div class="result-card-label">Sideways</div>
+            <div class="result-card-value" id="rSide">—</div>
+            <div class="result-card-unit" id="rSideUnit">STACKS</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
 
 <script>
-/* FIXED CANNON POSITION */
-const CANNON_X = -31.46;
-const CANNON_Z = 87.47;
+  // Forward calibration: 1 stack = 25 blocks, 2 stacks = 51 blocks
+  const fSlope     = (2 - 1) / (51 - 25);
+  const fIntercept = 1 - fSlope * 25;
 
-/* CANNON SETTINGS */
-const MAX_POWER = 6;
-const BLOCKS_PER_TNT = 25;
-const GAP = 1;
+  // Sideways calibration: 1 stack = 49 blocks, 2 stacks = 101 blocks
+  const sSlope     = (2 - 1) / (101 - 49);
+  const sIntercept = 1 - sSlope * 49;
 
-function simulate(xp, xd, zp, zd) {
-    return {
-        x: CANNON_X + (xp * BLOCKS_PER_TNT + GAP) * (xd === "+" ? 1 : -1),
-        z: CANNON_Z + (zp * BLOCKS_PER_TNT + GAP) * (zd === "+" ? 1 : -1)
-    };
-}
+  function stackFormat(rawStacks) {
+    const totalItems = Math.round(Math.abs(rawStacks) * 64);
+    const stacks = Math.floor(totalItems / 64);
+    const count  = totalItems % 64;
+    return { stacks, count };
+  }
 
-function calculate() {
-    const tx = parseFloat(document.getElementById("tx").value);
-    const tz = parseFloat(document.getElementById("tz").value);
+  function setCard(valueId, unitId, rawStacks) {
+    const { stacks, count } = stackFormat(rawStacks);
+    document.getElementById(valueId).textContent = stacks;
+    const unitEl = document.getElementById(unitId);
+    if (count > 0) {
+      unitEl.innerHTML = 'STACK' + (stacks !== 1 ? 'S' : '') + ' &nbsp;+&nbsp; <span style="color:var(--red-bright)">' + count + '</span> ITEMS';
+    } else {
+      unitEl.textContent = 'STACK' + (stacks !== 1 ? 'S' : '') + ' EXACT';
+    }
+  }
 
-    if (isNaN(tx) || isNaN(tz)) {
-        document.getElementById("output").textContent = "Enter valid target coordinates.";
-        return;
+  function calculate() {
+    const err = document.getElementById('errMsg');
+    err.style.display = 'none';
+
+    const cannonF = parseFloat(document.getElementById('cannonF').value);
+    const cannonS = parseFloat(document.getElementById('cannonS').value);
+    const targetF = parseFloat(document.getElementById('targetF').value);
+    const targetS = parseFloat(document.getElementById('targetS').value);
+
+    if (isNaN(cannonF) || isNaN(cannonS) || isNaN(targetF) || isNaN(targetS)) {
+      err.textContent = '⚠ FILL IN ALL FOUR COORDINATES';
+      err.style.display = 'block';
+      return;
     }
 
-    let best = null;
-    let bestError = Infinity;
+    const blocksF = Math.abs(targetF - cannonF);
+    const blocksS = Math.abs(targetS - cannonS);
 
-    for (let xp = 0; xp <= MAX_POWER; xp++) {
-        for (let zp = 0; zp <= MAX_POWER; zp++) {
-            for (let xd of ["+", "-"]) {
-                for (let zd of ["+", "-"]) {
+    const forwardStacks = fSlope * blocksF + fIntercept;
+    const sideStacks    = sSlope * blocksS + sIntercept;
 
-                    if (xp === 0 && zp === 0) continue;
+    setCard('rPayload', 'rPayloadUnit', 1);
+    setCard('rForward', 'rForwardUnit', forwardStacks);
+    setCard('rSide',    'rSideUnit',    sideStacks);
 
-                    const hit = simulate(xp, xd, zp, zd);
-                    const error = Math.hypot(hit.x - tx, hit.z - tz);
+    const box = document.getElementById('resultBox');
+    box.style.display = 'block';
+    box.querySelector('.panel').classList.remove('flash');
+    void box.querySelector('.panel').offsetWidth;
+    box.querySelector('.panel').classList.add('flash');
+    box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
 
-                    if (error < bestError) {
-                        bestError = error;
-                        best = { xp, xd, zp, zd, hit };
-                    }
-                }
-            }
-        }
-    }
-
-    document.getElementById("output").textContent =
-        `BEST MATCH\n\n` +
-        `Z${best.zd} : ${best.zp} power\n` +
-        `X${best.xd} : ${best.xp} power\n\n` +
-        `Landing position:\n` +
-        `X = ${best.hit.x.toFixed(2)}\n` +
-        `Z = ${best.hit.z.toFixed(2)}\n\n` +
-        `Miss distance: ${bestError.toFixed(2)} blocks`;
-}
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') calculate();
+  });
 </script>
-
 </body>
 </html>
